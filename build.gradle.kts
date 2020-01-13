@@ -48,3 +48,9 @@ tasks.withType<KotlinCompile> {
 		jvmTarget = "1.8"
 	}
 }
+
+allprojects {
+	tasks.create("applicationName") {
+		println(">> " + project.name)
+	}
+}
