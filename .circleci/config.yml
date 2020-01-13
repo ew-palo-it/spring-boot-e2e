@@ -1,49 +1,58 @@
-# Java Gradle CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-java/ for more details
-#
 version: 2.1
-orbs:
-  gcp-gke: circleci/gcp-gke@1.0.2
-workflows:
-  main:
-    jobs:
-      - gke/create-cluster:
-          cluster: gcp-testing
-jobs:
-  build:
+executors:
+  build-agent:
     docker:
-      # specify the version you desire here
-      - image: circleci/openjdk:8-jdk
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
+      - image: gcr.io/hk-playground/java-build-agent:latest
     working_directory: ~/repo
-
     environment:
-      # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
-
+commands:
+  setup_gcp:
+    steps:
+      - run: echo ${GCLOUD_SERVICE_KEY} > gcr_credentials.json
+      - run: gcloud auth activate-service-account --key-file=gcr_credentials.json
+      - run: gcloud config set project ${GCR_PROJECT_ID}
+  docker_build:
+    steps:
+      - run: docker build -t $(gradle applicationName):${git rev-parse --short HEAD} .
+      - run: docker tag $(gradle applicationName):$(git rev-parse --short HEAD) gcr.io/${IMAGE_SOURCE}/$(gradle applicationName):$(git rev-parse --short HEAD)
+  build_set_cluster:
+    steps:
+      - run: gcloud container clusters create spring-boot-e2e-cluster --num-nodes=2
+      - run: gcloud config set container/cluster spring-boot-e2e-cluster
+  deploy_cluster:
+    steps:
+      - run: kubectl run demo --image=gcr.io/${GCR_PROJECT_ID}/spring-boot-e2e:v1 --port 8080
+      - run: kubectl get pods
+      - run: kubectl expose deployment demo --type=LoadBalancer --port 80 --target-port 8080
+      - run: kubectl get service
+  scale:
+    steps:
+      - run: kubectl scale deployment demo --replicas=3
+      - run: kubectl get pods
+jobs:
+  build:
+    executor: build-agent
     steps:
       - checkout
-
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "build.gradle" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-
-      - run: gradle dependencies
-
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: v1-dependencies-{{ checksum "build.gradle" }}
-
-      # run tests!
-      - run: gradle test
+  build_image:
+    executor: build-agent
+    steps:
+      - setup_gcp
+      - run: gcloud auth configure-docker
+      - docker_build
+      - run: docker push gcr.io/${IMAGE_SOURCE}/$(gradle applicationName):$(git rev-parse --short HEAD)
+  deploy_dev:
+    executor: build-agent
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_gcp
+      - deploy
+workflows:
+  version: 2.1
+  build_and_deploy:
+    jobs:
+      - build:
+          context: development
