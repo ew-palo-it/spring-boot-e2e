@@ -1,4 +1,4 @@
-version: 2.1
+version: 2.0
 executors:
   build-agent:
     docker:
@@ -34,12 +34,10 @@ commands:
 jobs:
   build:
     executor: build-agent
-    context: development
     steps:
       - checkout
   build_image:
     executor: build-agent
-    context: development
     steps:
       - setup_gcp
       - run: gcloud auth configure-docker
@@ -47,16 +45,22 @@ jobs:
       - run: docker push gcr.io/${GCR_PROJECT_ID}/$(gradle applicationName):$(git rev-parse --short HEAD)
   deploy_dev:
     executor: build-agent
-    context: development
     steps:
       - attach_workspace:
           at: .
       - setup_gcp
-      - deploy
+      - deploy_cluster
 workflows:
-  version: 2.1
+  version: 2
   build_and_deploy:
     jobs:
-      - build
-      - build_image
-      - deploy_dev
+      - build:
+          context: development
+      - build_image:
+          context: development
+          requires:
+            - build
+      - deploy_dev:
+          context: development
+          requires:
+            - build_image
