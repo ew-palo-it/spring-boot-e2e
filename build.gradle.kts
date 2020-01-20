@@ -49,8 +49,6 @@ tasks.withType<KotlinCompile> {
 	}
 }
 
-allProjects {
-	tasks.create("applicationName") {
-		println((">> " + project.name).toLowerCase())
-	}
+tasks.create("applicationName") {
+	println((">> " + project.name).toLowerCase())
 }
