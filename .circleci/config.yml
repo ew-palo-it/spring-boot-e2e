@@ -3,7 +3,7 @@ executors:
   build-agent:
     docker:
       - image: gcr.io/spring-boot-e2e/java-build-agent:latest
-    working_directory: ~/
+    working_directory: ~/repo
     environment:
       JVM_OPTS: -Xmx3200m
       TERM: dumb
