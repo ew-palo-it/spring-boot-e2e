@@ -17,7 +17,7 @@ commands:
     steps:
       - setup_remote_docker
       - run: docker build -t ${APP_NAME}:v1 .
-      - run: docker tag ${APP_NAME}:v1 gcr.io/${IMAGE_SOURCE}/${APP_NAME}:v1
+      - run: docker tag ${APP_NAME}:v1 gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
   build_set_cluster:
     steps:
       - run: gcloud container clusters create spring-boot-e2e-cluster --num-nodes=2 --region=${GCR_SERVICE_REGION}
