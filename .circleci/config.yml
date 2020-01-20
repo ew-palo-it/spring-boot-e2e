@@ -15,7 +15,12 @@ commands:
       - run: gcloud config set project ${GCR_PROJECT_ID}
   docker_build:
     steps:
-      - run: docker build -t ${APP_NAME}:$(git rev-parse --short HEAD) .
+      - run: >
+        if [ "${CIRCLE_BRANCH}" == "master" ]; then
+          docker build -t ${APP_NAME}:$(git rev-parse --short HEAD) .
+        else
+          echo "Skipping Step"
+        fi
       - run: docker tag ${APP_NAME}:$(git rev-parse --short HEAD) gcr.io/${IMAGE_SOURCE}/${APP_NAME}:$(git rev-parse --short HEAD)
   build_set_cluster:
     steps:
