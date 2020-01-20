@@ -15,15 +15,15 @@ commands:
       - run: gcloud config set project ${GCR_PROJECT_ID}
   docker_build:
     steps:
-      - run: docker build -t $(gradle applicationName):$(git rev-parse --short HEAD) .
-      - run: docker tag $(gradle applicationName):$(git rev-parse --short HEAD) gcr.io/${IMAGE_SOURCE}/$(gradle applicationName):$(git rev-parse --short HEAD)
+      - run: docker build -t ${APP_NAME}:$(git rev-parse --short HEAD) .
+      - run: docker tag ${APP_NAME}:$(git rev-parse --short HEAD) gcr.io/${IMAGE_SOURCE}/${APP_NAME}:$(git rev-parse --short HEAD)
   build_set_cluster:
     steps:
       - run: gcloud container clusters create spring-boot-e2e-cluster --num-nodes=2 --region=${GCR_SERVICE_REGION}
       - run: gcloud config set container/cluster spring-boot-e2e-cluster
   deploy_cluster:
     steps:
-      - run: kubectl run demo --image=gcr.io/${GCR_PROJECT_ID}/$(gradle applicationName):v1 --port 8080
+      - run: kubectl run demo --image=gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1 --port 8080
       - run: kubectl get pods
       - run: kubectl expose deployment demo --type=LoadBalancer --port 80 --target-port 8080
       - run: kubectl get service
@@ -42,7 +42,7 @@ jobs:
       - setup_gcp
       - run: gcloud auth configure-docker
       - docker_build
-      - run: docker push gcr.io/${GCR_PROJECT_ID}/$(gradle applicationName):$(git rev-parse --short HEAD)
+      - run: docker push gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:$(git rev-parse --short HEAD)
   deploy_dev:
     executor: build-agent
     steps:
