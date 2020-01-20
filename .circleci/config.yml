@@ -24,7 +24,6 @@ commands:
       - run: gcloud config set container/cluster spring-boot-e2e-cluster
   deploy_cluster:
     steps:
-      - run: kubectl run demo --image=gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1 --port 8080
       - run: kubectl get pods
       - run: kubectl expose deployment demo --type=LoadBalancer --port 80 --target-port 8080
       - run: kubectl get service
@@ -51,6 +50,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_gcp
+      - build_set_cluster
       - deploy_cluster
 workflows:
   version: 2
