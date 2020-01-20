@@ -3,7 +3,7 @@ executors:
   build-agent:
     docker:
       - image: gcr.io/spring-boot-e2e/java-build-agent:latest
-    working_directory: ~/repo
+    working_directory: ~/
     environment:
       JVM_OPTS: -Xmx3200m
       TERM: dumb
@@ -15,12 +15,7 @@ commands:
       - run: gcloud config set project ${GCR_PROJECT_ID}
   docker_build:
     steps:
-      - run: >
-        if [ "${CIRCLE_BRANCH}" == "master" ]; then
-          docker build -t ${APP_NAME}:$(git rev-parse --short HEAD) .
-        else
-          echo "Skipping Step"
-        fi
+      - run: docker build -t ${APP_NAME}:$(git rev-parse --short HEAD) .
       - run: docker tag ${APP_NAME}:$(git rev-parse --short HEAD) gcr.io/${IMAGE_SOURCE}/${APP_NAME}:$(git rev-parse --short HEAD)
   build_set_cluster:
     steps:
