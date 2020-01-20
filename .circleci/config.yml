@@ -39,6 +39,7 @@ jobs:
   build_image:
     executor: build-agent
     steps:
+      - checkout
       - setup_gcp
       - run: gcloud auth configure-docker
       - docker_build
