@@ -20,7 +20,6 @@ commands:
       - run: docker tag ${APP_NAME}:v1 gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
   build_set_cluster:
     steps:
-      - run: gcloud container clusters create spring-boot-e2e-cluster --num-nodes=2 --region=${GCR_SERVICE_REGION}
       - run: gcloud config set container/cluster spring-boot-e2e-cluster
   deploy_cluster:
     steps:
@@ -31,6 +30,9 @@ commands:
     steps:
       - run: kubectl scale deployment demo --replicas=3
       - run: kubectl get pods
+  update_application:
+    steps:
+      - run: kubectl set image deployment/${APP_NAME} demo=gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
 jobs:
   build:
     executor: build-agent
@@ -50,8 +52,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_gcp
-      - build_set_cluster
-      - deploy_cluster
+      - update_application
 workflows:
   version: 2
   build_and_deploy:
