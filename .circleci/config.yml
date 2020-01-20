@@ -15,8 +15,8 @@ commands:
       - run: gcloud config set project ${GCR_PROJECT_ID}
   docker_build:
     steps:
-      - run: docker build -t ${APP_NAME}:$(git rev-parse --short HEAD) .
-      - run: docker tag ${APP_NAME}:$(git rev-parse --short HEAD) gcr.io/${IMAGE_SOURCE}/${APP_NAME}:$(git rev-parse --short HEAD)
+      - run: docker build -t ${APP_NAME}:v1 .
+      - run: docker tag ${APP_NAME}:v1 gcr.io/${IMAGE_SOURCE}/${APP_NAME}:v1
   build_set_cluster:
     steps:
       - run: gcloud container clusters create spring-boot-e2e-cluster --num-nodes=2 --region=${GCR_SERVICE_REGION}
@@ -42,7 +42,7 @@ jobs:
       - setup_gcp
       - run: gcloud auth configure-docker
       - docker_build
-      - run: docker push gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:$(git rev-parse --short HEAD)
+      - run: docker push gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
   deploy_dev:
     executor: build-agent
     steps:
