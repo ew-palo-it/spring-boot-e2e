@@ -2,7 +2,7 @@ version: 2.1
 executors:
   build-agent:
     docker:
-      - image: gcr.io/spring-boot-e2e/java-build-agent:latest
+      - image: gcr.io/${GCR_PROJECT_ID}/java-build-agent:latest
     working_directory: ~/repo
     environment:
       JVM_OPTS: -Xmx3200m
@@ -20,26 +20,19 @@ commands:
       - run: docker tag ${APP_NAME}:v1 gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
   build_set_cluster:
     steps:
-      - run: gcloud config set container/cluster spring-boot-e2e-cluster
-  deploy_cluster:
-    steps:
-      - run: kubectl get pods
-      - run: kubectl expose deployment demo --type=LoadBalancer --port 80 --target-port 8080
-      - run: kubectl get service
+      - run: gcloud config set container/cluster ${KUBE_CLUSTER_NAME}
   scale:
     steps:
       - run: kubectl scale deployment demo --replicas=3
       - run: kubectl get pods
   update_application:
     steps:
-      - run: kubectl set image deployment/${APP_NAME} demo=gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
+      - run: gcloud container clusters get-credentials ${KUBE_CLUSTER_NAME} --zone ${KUBE_CLUSTER_GCP_ZONE}
+      - run: kubectl set image deployment ${APP_NAME} ${APP_NAME}-sha256=gcr.io/${IMAGE_SOURCE}/${APP_NAME}:${APP_NAME}jobs
 jobs:
-  build:
-    executor: build-agent
-    steps:
-      - checkout
   build_image:
-    executor: build-agent
+    executor:
+      build-agent
     steps:
       - checkout
       - setup_gcp
@@ -47,7 +40,8 @@ jobs:
       - docker_build
       - run: docker push gcr.io/${GCR_PROJECT_ID}/${APP_NAME}:v1
   deploy_dev:
-    executor: build-agent
+    executor:
+      build-agent
     steps:
       - attach_workspace:
           at: .
@@ -57,12 +51,8 @@ workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build:
-          context: development
       - build_image:
           context: development
-          requires:
-            - build
       - deploy_dev:
           context: development
           requires:
