@@ -11,6 +11,6 @@ import org.springframework.web.bind.annotation.RestController
 class HiController {
     @RequestMapping(method = [RequestMethod.GET], produces = [MediaType.APPLICATION_JSON_VALUE])
     fun hi(@RequestParam(name = "name") name: String): String {
-        return "Hi $name"
+        return "Hi $name !!!"
     }
 }
