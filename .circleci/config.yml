@@ -28,7 +28,7 @@ commands:
   update_application:
     steps:
       - run: gcloud container clusters get-credentials ${KUBE_CLUSTER_NAME} --zone ${KUBE_CLUSTER_GCP_ZONE}
-      - run: kubectl set image deployment ${APP_NAME} ${APP_NAME}-sha256=gcr.io/${IMAGE_SOURCE}/${APP_NAME}:${APP_NAME}jobs
+      - run: kubectl set image deployment ${APP_NAME} ${APP_NAME}-sha256=gcr.io/${IMAGE_SOURCE}/${APP_NAME}:${APP_NAME}
 jobs:
   build_image:
     executor:
